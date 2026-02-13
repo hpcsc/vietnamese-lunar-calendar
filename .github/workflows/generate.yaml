@@ -1,0 +1,65 @@
+name: Generate Lunar Calendar
+
+on:
+  schedule:
+    - cron: '0 0 1 */2 *' # Every 2 months
+  workflow_dispatch:
+    inputs:
+      years_ahead:
+        description: 'Years ahead to generate'
+        required: false
+        default: '10'
+        type: string
+  push:
+    branches:
+      - main
+  release:
+    types: [published]
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Generate ICS file
+        run: |
+          YEARS=${{ github.event.inputs.years_ahead || '10' }}
+          go run main.go -years $YEARS
+
+      - name: Upload ICS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vietnamese-lunar-calendar
+          path: vietnamese-lunar-calendar.ics
+          retention-days: 365
+
+  release:
+    needs: generate
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download ICS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vietnamese-lunar-calendar
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: vietnamese-lunar-calendar.ics
+          generate_release_notes: true
