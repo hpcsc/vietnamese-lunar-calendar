@@ -41,17 +41,23 @@
         .tab {
             flex: 1;
             padding: 12px;
-            border: none;
-            background: #f0f0f0;
+            border: 2px solid #ccc;
+            background: #e0e0e0;
+            color: #333;
             cursor: pointer;
             border-radius: 8px;
             font-size: 16px;
             font-weight: 500;
             transition: all 0.2s;
         }
+        .tab:hover {
+            background: #d0d0d0;
+            border-color: #aaa;
+        }
         .tab.active {
             background: #667eea;
             color: white;
+            border-color: #667eea;
         }
         .form-group {
             margin-bottom: 20px;
@@ -63,7 +69,8 @@
             font-weight: 500;
         }
         input[type="date"],
-        input[type="number"] {
+        input[type="number"],
+        input[type="text"] {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
@@ -128,6 +135,15 @@
             color: #666;
             padding: 20px;
         }
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -137,6 +153,7 @@
         <div class="tabs">
             <button class="tab active" data-tab="solarToLunar">Dương → Âm</button>
             <button class="tab" data-tab="lunarToSolar">Âm → Dương</button>
+            <button class="tab" data-tab="generateICS">Tạo ICS</button>
         </div>
 
         <div id="solarToLunarForm">
@@ -159,6 +176,42 @@
             <button id="convertToSolar">Chuyển đổi</button>
         </div>
 
+        <div id="generateICSForm" style="display: none;">
+            <div class="info-box">
+                <strong>ICS là gì?</strong><br>
+                ICS là file lịch có thể import vào Google Calendar, Apple Calendar, Outlook, v.v.<br>
+                Sau khi tải về, bạn chỉ cần mở file và chọn "Thêm vào lịch".
+            </div>
+
+            <div class="form-group">
+                <label>Số năm cần tạo</label>
+                <input type="number" id="yearsAhead" value="10" min="1" max="50">
+                <small style="color: #666;">Ví dụ: 10 năm sẽ tạo lịch từ năm nay đến 10 năm sau</small>
+            </div>
+
+            <button id="showCustomEvents" style="background: #6c757d; margin-bottom: 16px;">+ Thêm sự kiện tùy chỉnh (sinh nhật, giỗ)</button>
+
+            <div id="customEventsSection" style="display: none;">
+                <div class="form-group">
+                    <label>Thêm sự kiện tùy chỉnh (sinh nhật, giỗ, v.v.)</label>
+                    <div class="row">
+                        <input type="number" id="customDay" placeholder="Ngày" min="1" max="30" style="width: 70px;">
+                        <input type="number" id="customMonth" placeholder="Tháng" min="1" max="12" style="width: 70px;">
+                        <input type="number" id="customYear" placeholder="Năm (bỏ qua nếu lặp lại mỗi năm)" style="width: 200px;">
+                    </div>
+                    <input type="text" id="customTitle" placeholder="Tên sự kiện (VD: Sinh nhật, Giỗ, v.v.)" style="margin-top: 8px;">
+                    <button id="addCustomEvent" style="margin-top: 8px; background: #28a745;">+ Thêm sự kiện</button>
+                    <div style="margin-top: 8px; font-size: 14px; color: #666;">
+                        <strong>Hướng dẫn:</strong> Nhập ngày/tháng theo âm lịch. Bỏ trống ô "Năm" nếu sự kiện lặp lại mỗi năm (như sinh nhật). Điền "Năm" nếu sự kiện chỉ có một lần.
+                    </div>
+                </div>
+
+                <div id="customEventsList" style="margin-bottom: 16px;"></div>
+            </div>
+
+            <button id="generateICS">Tải file ICS</button>
+        </div>
+
         <div id="result" class="result">
             <div class="result-label">Kết quả</div>
             <div class="result-value" id="resultValue"></div>
@@ -173,6 +226,7 @@
     <script>
         const go = new Go();
         let wasmReady = false;
+        let customEvents = [];
 
         async function loadWasm() {
             document.getElementById('loading').style.display = 'block';
@@ -197,6 +251,7 @@
                 const tabName = tab.dataset.tab;
                 document.getElementById('solarToLunarForm').style.display = tabName === 'solarToLunar' ? 'block' : 'none';
                 document.getElementById('lunarToSolarForm').style.display = tabName === 'lunarToSolar' ? 'block' : 'none';
+                document.getElementById('generateICSForm').style.display = tabName === 'generateICS' ? 'block' : 'none';
                 document.getElementById('result').classList.remove('show');
             });
         });
@@ -241,6 +296,102 @@
             document.getElementById('resultValue').textContent = 
                 `${result.day}/${result.month}/${result.year}`;
             document.getElementById('result').classList.add('show');
+        });
+
+        document.getElementById('addCustomEvent').addEventListener('click', () => {
+            const day = parseInt(document.getElementById('customDay').value);
+            const month = parseInt(document.getElementById('customMonth').value);
+            const year = document.getElementById('customYear').value;
+            const title = document.getElementById('customTitle').value;
+
+            if (!day || !month || !title) {
+                alert('Vui lòng nhập ngày, tháng và tên sự kiện');
+                return;
+            }
+
+            let eventStr;
+            if (year) {
+                eventStr = `${day}/${month}/${year}:${title}`;
+            } else {
+                eventStr = `${day}/${month}:${title}`;
+            }
+
+            customEvents.push(eventStr);
+            renderCustomEvents();
+
+            document.getElementById('customDay').value = '';
+            document.getElementById('customMonth').value = '';
+            document.getElementById('customYear').value = '';
+            document.getElementById('customTitle').value = '';
+        });
+
+        function renderCustomEvents() {
+            const container = document.getElementById('customEventsList');
+            container.innerHTML = customEvents.map((event, index) => {
+                const [datePart, title] = event.split(':');
+                return `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f0f0f0; border-radius: 4px; margin-bottom: 4px;">
+                    <span>${datePart}: ${title}</span>
+                    <button onclick="removeCustomEvent(${index})" style="background: #dc3545; padding: 4px 8px; font-size: 12px; width: auto;">Xóa</button>
+                </div>`;
+            }).join('');
+        }
+
+        window.removeCustomEvent = function(index) {
+            customEvents.splice(index, 1);
+            renderCustomEvents();
+        };
+
+        document.getElementById('showCustomEvents').addEventListener('click', () => {
+            const section = document.getElementById('customEventsSection');
+            const btn = document.getElementById('showCustomEvents');
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                btn.textContent = '− Ẩn sự kiện tùy chỉnh';
+            } else {
+                section.style.display = 'none';
+                btn.textContent = '+ Thêm sự kiện tùy chỉnh (sinh nhật, giỗ)';
+            }
+        });
+
+        document.getElementById('generateICS').addEventListener('click', () => {
+            if (!wasmReady) {
+                alert('Module đang tải, vui lòng đợi...');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').classList.remove('show');
+
+            setTimeout(() => {
+                try {
+                    const yearsAhead = parseInt(document.getElementById('yearsAhead').value) || 10;
+                    const customEventsStr = customEvents.join(',');
+
+                    const result = window.generateICS(yearsAhead, customEventsStr);
+                    
+                    if (result.error) {
+                        alert('Lỗi: ' + result.error);
+                        document.getElementById('loading').style.display = 'none';
+                        return;
+                    }
+
+                    const blob = new Blob([result.content], { type: 'text/calendar' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'vietnamese-lunar-calendar.ics';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    document.getElementById('resultValue').textContent = 
+                        `Đã tạo ${result.count} sự kiện`;
+                    document.getElementById('result').classList.add('show');
+                } finally {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            }, 100);
         });
 
         document.getElementById('solarDate').valueAsDate = new Date();

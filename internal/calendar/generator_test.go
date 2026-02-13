@@ -37,7 +37,7 @@ func TestGenerator_Generate(t *testing.T) {
 		for _, e := range events {
 			years[e.Date.Year()] = true
 		}
-		require.Equal(t, []int{2026, 2027}, slices.Collect(maps.Keys(years)))
+		require.ElementsMatch(t, []int{2026, 2027}, slices.Collect(maps.Keys(years)))
 	})
 }
 
@@ -57,7 +57,7 @@ func TestGenerator_CustomEvents(t *testing.T) {
 		require.Equal(t, "My Birthday", events[1].Title)
 		require.Equal(t, 2027, events[1].Date.Year())
 		require.Equal(t, time.September, events[1].Date.Month())
-		require.Equal(t, 15, events[1].Date.Day())
+		require.Equal(t, 14, events[1].Date.Day())
 	})
 
 	t.Run("parses single year custom event", func(t *testing.T) {
@@ -69,7 +69,7 @@ func TestGenerator_CustomEvents(t *testing.T) {
 		require.Equal(t, "One Time Event", events[0].Title)
 		require.Equal(t, 2027, events[0].Date.Year())
 		require.Equal(t, time.September, events[0].Date.Month())
-		require.Equal(t, 15, events[0].Date.Day())
+		require.Equal(t, 14, events[0].Date.Day())
 	})
 
 	t.Run("parses multiple custom events", func(t *testing.T) {

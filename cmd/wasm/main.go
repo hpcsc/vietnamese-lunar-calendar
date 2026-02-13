@@ -2,7 +2,10 @@ package main
 
 import (
 	"syscall/js"
+	"time"
 
+	"github.com/hpcsc/vietnamese-lunar-calendar/internal/calendar"
+	"github.com/hpcsc/vietnamese-lunar-calendar/internal/ics"
 	"github.com/hungtrd/amlich"
 )
 
@@ -34,9 +37,30 @@ func convertLunarToSolar(this js.Value, args []js.Value) interface{} {
 	}
 }
 
+func generateICS(this js.Value, args []js.Value) interface{} {
+	yearsAhead := args[0].Int()
+	customEvents := args[1].String()
+
+	startYear := time.Now().Year()
+	gen := calendar.NewGenerator(startYear, yearsAhead)
+	events, err := gen.Generate(customEvents)
+	if err != nil {
+		return map[string]interface{}{
+			"error": err.Error(),
+		}
+	}
+
+	icsContent := ics.Generate(events)
+	return map[string]interface{}{
+		"content": icsContent,
+		"count":   len(events),
+	}
+}
+
 func registerCallbacks() {
 	js.Global().Set("convertSolarToLunar", js.FuncOf(convertSolarToLunar))
 	js.Global().Set("convertLunarToSolar", js.FuncOf(convertLunarToSolar))
+	js.Global().Set("generateICS", js.FuncOf(generateICS))
 }
 
 func main() {

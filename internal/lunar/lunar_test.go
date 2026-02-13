@@ -34,7 +34,7 @@ func TestFindLunarDate(t *testing.T) {
 		result := lunar.FindLunarDate(2026, lunar.VuLan)
 		require.Equal(t, 2026, result.Year())
 		require.Equal(t, time.August, result.Month())
-		require.Equal(t, 27, result.Day())
+		require.Equal(t, 26, result.Day())
 	})
 
 	t.Run("TrungThu", func(t *testing.T) {

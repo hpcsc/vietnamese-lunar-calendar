@@ -69,8 +69,12 @@ func FindLunarDate(year int, ld Date, opts ...FindOption) time.Time {
 		}
 
 		for day := dayStart; day <= dayEnd; day++ {
-			t := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
-			lunar := amlich.New(t.In(amlich.VietnamLocation()))
+			loc := time.UTC
+			if l, err := time.LoadLocation("Asia/Hanoi"); err == nil {
+				loc = l
+			}
+			t := time.Date(year, time.Month(month), day, 0, 0, 0, 0, loc)
+			lunar := amlich.New(t)
 			if lunar.Month == ld.Month && lunar.Day == ld.Day {
 				return t
 			}
