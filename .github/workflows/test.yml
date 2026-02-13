@@ -18,8 +18,13 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Set up Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+
       - name: Download dependencies
         run: go mod download
 
       - name: Run tests
-        run: go test -v ./...
+        run: task test

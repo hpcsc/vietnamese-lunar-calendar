@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chuyển đổi Âm Lịch - Dương Lịch</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: #f0f0f0;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        input[type="date"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+        .row input {
+            flex: 1;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .result-label {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .result-value {
+            color: #333;
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chuyển đổi Âm Lịch</h1>
+        
+        <div class="tabs">
+            <button class="tab active" data-tab="solarToLunar">Dương → Âm</button>
+            <button class="tab" data-tab="lunarToSolar">Âm → Dương</button>
+        </div>
+
+        <div id="solarToLunarForm">
+            <div class="form-group">
+                <label>Ngày Dương Lịch</label>
+                <input type="date" id="solarDate">
+            </div>
+            <button id="convertToLunar">Chuyển đổi</button>
+        </div>
+
+        <div id="lunarToSolarForm" style="display: none;">
+            <div class="form-group">
+                <label>Ngày Âm Lịch</label>
+                <div class="row">
+                    <input type="number" id="lunarDay" placeholder="Ngày" min="1" max="30">
+                    <input type="number" id="lunarMonth" placeholder="Tháng" min="1" max="12">
+                    <input type="number" id="lunarYear" placeholder="Năm">
+                </div>
+            </div>
+            <button id="convertToSolar">Chuyển đổi</button>
+        </div>
+
+        <div id="result" class="result">
+            <div class="result-label">Kết quả</div>
+            <div class="result-value" id="resultValue"></div>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            Đang tải...
+        </div>
+    </div>
+
+    <script src="wasm_exec.js"></script>
+    <script>
+        const go = new Go();
+        let wasmReady = false;
+
+        async function loadWasm() {
+            document.getElementById('loading').style.display = 'block';
+            try {
+                const response = await fetch('vietnamese-lunar-calendar.wasm');
+                const buffer = await response.arrayBuffer();
+                const result = await WebAssembly.instantiate(buffer, go.importObject);
+                wasmReady = true;
+                go.run(result.instance);
+            } catch (e) {
+                console.error('Failed to load WASM:', e);
+                alert('Failed to load the calendar module. Please refresh the page.');
+            }
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const tabName = tab.dataset.tab;
+                document.getElementById('solarToLunarForm').style.display = tabName === 'solarToLunar' ? 'block' : 'none';
+                document.getElementById('lunarToSolarForm').style.display = tabName === 'lunarToSolar' ? 'block' : 'none';
+                document.getElementById('result').classList.remove('show');
+            });
+        });
+
+        document.getElementById('convertToLunar').addEventListener('click', () => {
+            if (!wasmReady) {
+                alert('Module đang tải, vui lòng đợi...');
+                return;
+            }
+
+            const dateInput = document.getElementById('solarDate').value;
+            if (!dateInput) {
+                alert('Vui lòng chọn ngày');
+                return;
+            }
+
+            const [year, month, day] = dateInput.split('-').map(Number);
+            const result = window.convertSolarToLunar(year, month, day);
+            
+            document.getElementById('resultValue').textContent = 
+                `Ngày ${result.day} tháng ${result.month} năm ${result.year}`;
+            document.getElementById('result').classList.add('show');
+        });
+
+        document.getElementById('convertToSolar').addEventListener('click', () => {
+            if (!wasmReady) {
+                alert('Module đang tải, vui lòng đợi...');
+                return;
+            }
+
+            const day = parseInt(document.getElementById('lunarDay').value);
+            const month = parseInt(document.getElementById('lunarMonth').value);
+            const year = parseInt(document.getElementById('lunarYear').value);
+
+            if (!day || !month || !year) {
+                alert('Vui lòng nhập đầy đủ ngày, tháng, năm');
+                return;
+            }
+
+            const result = window.convertLunarToSolar(year, month, day);
+            
+            document.getElementById('resultValue').textContent = 
+                `${result.day}/${result.month}/${result.year}`;
+            document.getElementById('result').classList.add('show');
+        });
+
+        document.getElementById('solarDate').valueAsDate = new Date();
+
+        loadWasm();
+    </script>
+</body>
+</html>

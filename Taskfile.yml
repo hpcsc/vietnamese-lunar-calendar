@@ -1,0 +1,37 @@
+version: '3'
+
+tasks:
+  build-cli:
+    desc: Build CLI binary
+    cmds:
+      - go build -o bin/vietnamese-lunar-calendar ./cmd/cli
+
+  build-wasm:
+    desc: Build WASM for web
+    cmds:
+      - GOOS=js GOARCH=wasm go build -o site/vietnamese-lunar-calendar.wasm ./cmd/wasm
+      - cp "{{.GOENV}}/lib/wasm/wasm_exec.js" site/
+    vars:
+      GOENV:
+        sh: go env GOROOT
+
+  build: build-cli build-wasm
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test -v ./internal/...
+
+  test-all:
+    desc: Run all tests including integration
+    cmds:
+      - go test -v ./...
+
+  site:
+    desc: Serve site locally
+    deps:
+      - build-wasm
+    cmds:
+      - npx -y serve site
+    vars:
+      PORT: 3000
