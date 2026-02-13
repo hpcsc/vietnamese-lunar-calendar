@@ -21,7 +21,7 @@ func findEventByTitle(events []calendar.Event, title string) *calendar.Event {
 
 func TestGenerator_Generate(t *testing.T) {
 	t.Run("generates events for default years", func(t *testing.T) {
-		gen := calendar.NewGenerator(2026, 1)
+		gen := calendar.NewGenerator(2026, 1, "Asia/Hanoi")
 		events, err := gen.Generate("")
 
 		require.NoError(t, err)
@@ -29,7 +29,7 @@ func TestGenerator_Generate(t *testing.T) {
 	})
 
 	t.Run("generates events for multiple years", func(t *testing.T) {
-		gen := calendar.NewGenerator(2026, 2)
+		gen := calendar.NewGenerator(2026, 2, "Asia/Hanoi")
 		events, err := gen.Generate("")
 
 		require.NoError(t, err)
@@ -43,7 +43,7 @@ func TestGenerator_Generate(t *testing.T) {
 
 func TestGenerator_CustomEvents(t *testing.T) {
 	t.Run("parses recurring custom event", func(t *testing.T) {
-		gen := calendar.NewGenerator(2026, 2)
+		gen := calendar.NewGenerator(2026, 2, "Asia/Hanoi")
 		events, err := gen.Generate("15/8:My Birthday")
 
 		require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestGenerator_CustomEvents(t *testing.T) {
 	})
 
 	t.Run("parses single year custom event", func(t *testing.T) {
-		gen := calendar.NewGenerator(2026, 2)
+		gen := calendar.NewGenerator(2026, 2, "Asia/Hanoi")
 		events, err := gen.Generate("15/8/2027:One Time Event")
 
 		require.NoError(t, err)
@@ -73,7 +73,7 @@ func TestGenerator_CustomEvents(t *testing.T) {
 	})
 
 	t.Run("parses multiple custom events", func(t *testing.T) {
-		gen := calendar.NewGenerator(2026, 1)
+		gen := calendar.NewGenerator(2026, 1, "Asia/Hanoi")
 		events, err := gen.Generate("4/5:Event 1,15/8:Event 2")
 
 		require.NoError(t, err)
@@ -91,28 +91,28 @@ func TestGenerator_CustomEvents(t *testing.T) {
 	})
 
 	t.Run("invalid format returns error", func(t *testing.T) {
-		gen := calendar.NewGenerator(2026, 1)
+		gen := calendar.NewGenerator(2026, 1, "Asia/Hanoi")
 		_, err := gen.Generate("invalid")
 
 		require.Error(t, err)
 	})
 
 	t.Run("empty title returns error", func(t *testing.T) {
-		gen := calendar.NewGenerator(2026, 1)
+		gen := calendar.NewGenerator(2026, 1, "Asia/Hanoi")
 		_, err := gen.Generate("15/8:")
 
 		require.Error(t, err)
 	})
 
 	t.Run("missing day returns error", func(t *testing.T) {
-		gen := calendar.NewGenerator(2026, 1)
+		gen := calendar.NewGenerator(2026, 1, "Asia/Hanoi")
 		_, err := gen.Generate("/8:Event")
 
 		require.Error(t, err)
 	})
 
 	t.Run("missing month returns error", func(t *testing.T) {
-		gen := calendar.NewGenerator(2026, 1)
+		gen := calendar.NewGenerator(2026, 1, "Asia/Hanoi")
 		_, err := gen.Generate("15/:Event")
 
 		require.Error(t, err)
@@ -132,7 +132,7 @@ func TestGenerator_DefaultEvents(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gen := calendar.NewGenerator(2026, 1)
+			gen := calendar.NewGenerator(2026, 1, "Asia/Hanoi")
 			events, err := gen.Generate("")
 
 			require.NoError(t, err)
@@ -145,7 +145,7 @@ func TestGenerator_DefaultEvents(t *testing.T) {
 
 func TestEvent_LunarDate(t *testing.T) {
 	t.Run("default events have Show true", func(t *testing.T) {
-		gen := calendar.NewGenerator(2026, 1)
+		gen := calendar.NewGenerator(2026, 1, "Asia/Hanoi")
 		events, err := gen.Generate("")
 
 		require.NoError(t, err)
@@ -155,7 +155,7 @@ func TestEvent_LunarDate(t *testing.T) {
 	})
 
 	t.Run("first day of month events have Show false", func(t *testing.T) {
-		gen := calendar.NewGenerator(2026, 1)
+		gen := calendar.NewGenerator(2026, 1, "Asia/Hanoi")
 		events, err := gen.Generate("")
 
 		require.NoError(t, err)

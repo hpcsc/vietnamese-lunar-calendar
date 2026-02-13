@@ -269,7 +269,7 @@
             }
 
             const [year, month, day] = dateInput.split('-').map(Number);
-            const result = window.convertSolarToLunar(year, month, day);
+            const result = window.convertSolarToLunar(year, month, day, "Asia/Hanoi");
             
             document.getElementById('resultValue').textContent = 
                 `Ngày ${result.day} tháng ${result.month} năm ${result.year}`;
@@ -291,7 +291,7 @@
                 return;
             }
 
-            const result = window.convertLunarToSolar(year, month, day);
+            const result = window.convertLunarToSolar(year, month, day, "Asia/Hanoi");
             
             document.getElementById('resultValue').textContent = 
                 `${result.day}/${result.month}/${result.year}`;
@@ -367,7 +367,7 @@
                     const yearsAhead = parseInt(document.getElementById('yearsAhead').value) || 10;
                     const customEventsStr = customEvents.join(',');
 
-                    const result = window.generateICS(yearsAhead, customEventsStr);
+                    const result = window.generateICS(yearsAhead, customEventsStr, "Asia/Hanoi");
                     
                     if (result.error) {
                         alert('Lỗi: ' + result.error);

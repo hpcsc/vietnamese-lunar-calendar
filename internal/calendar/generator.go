@@ -25,12 +25,17 @@ type Event struct {
 type Generator struct {
 	startYear  int
 	yearsAhead int
+	timezone   string
 }
 
-func NewGenerator(startYear, yearsAhead int) *Generator {
+func NewGenerator(startYear, yearsAhead int, timezone string) *Generator {
+	if timezone == "" {
+		timezone = "Asia/Hanoi"
+	}
 	return &Generator{
 		startYear:  startYear,
 		yearsAhead: yearsAhead,
+		timezone:   timezone,
 	}
 }
 
@@ -54,7 +59,9 @@ func (g *Generator) generateDefaultEvents() []Event {
 func (g *Generator) getEventsForYear(year int) []Event {
 	var events []Event
 
-	tetDate := lunar.FindLunarDate(year, lunar.Tet)
+	tzOption := lunar.WithTimezone(g.timezone)
+
+	tetDate := lunar.FindLunarDate(year, lunar.Tet, tzOption)
 	events = append(events, Event{
 		Title:       "Tết Nguyên Đán",
 		Date:        tetDate,
@@ -71,19 +78,19 @@ func (g *Generator) getEventsForYear(year int) []Event {
 
 	events = append(events, Event{
 		Title:       "Giỗ Tổ Hùng Vương",
-		Date:        lunar.FindLunarDate(year, lunar.HungKingCommemoration),
+		Date:        lunar.FindLunarDate(year, lunar.HungKingCommemoration, tzOption),
 		LunarDate:   LunarDate{Day: lunar.HungKingCommemoration.Day, Month: lunar.HungKingCommemoration.Month, Show: true},
 		Description: "Giỗ Tổ Hùng Vương",
 	})
 
 	events = append(events, Event{
 		Title:       "Tết Đoan Ngọ",
-		Date:        lunar.FindLunarDate(year, lunar.DuongNgoc),
+		Date:        lunar.FindLunarDate(year, lunar.DuongNgoc, tzOption),
 		LunarDate:   LunarDate{Day: lunar.DuongNgoc.Day, Month: lunar.DuongNgoc.Month, Show: true},
 		Description: "Tết Đoan Ngọ - Mùng 5 tháng 5",
 	})
 
-	vuLan := lunar.FindLunarDate(year, lunar.VuLan)
+	vuLan := lunar.FindLunarDate(year, lunar.VuLan, tzOption)
 	events = append(events, Event{
 		Title:       "Vu Lan",
 		Date:        vuLan,
@@ -91,7 +98,7 @@ func (g *Generator) getEventsForYear(year int) []Event {
 		Description: "Vu Lan - Rằm tháng 7",
 	})
 
-	trungThu := lunar.FindLunarDate(year, lunar.TrungThu)
+	trungThu := lunar.FindLunarDate(year, lunar.TrungThu, tzOption)
 	events = append(events, Event{
 		Title:       "Tết Trung Thu",
 		Date:        trungThu,
@@ -106,6 +113,7 @@ func (g *Generator) getEventsForYear(year int) []Event {
 
 func (g *Generator) getFirstDayOfLunarMonths(year int, existingEvents []Event) []Event {
 	var events []Event
+	tzOption := lunar.WithTimezone(g.timezone)
 
 	existingLunarDates := make(map[string]bool)
 	for _, e := range existingEvents {
@@ -117,7 +125,7 @@ func (g *Generator) getFirstDayOfLunarMonths(year int, existingEvents []Event) [
 		if existingLunarDates[lunarDateKey] {
 			continue
 		}
-		date := lunar.FindLunarDate(year, lunar.Date{Month: month, Day: 1})
+		date := lunar.FindLunarDate(year, lunar.Date{Month: month, Day: 1}, tzOption)
 		if !date.IsZero() {
 			events = append(events, Event{
 				Title:       fmt.Sprintf("Mùng 1 Tháng %d (Âm lịch)", month),
@@ -133,6 +141,7 @@ func (g *Generator) getFirstDayOfLunarMonths(year int, existingEvents []Event) [
 
 func (g *Generator) parseCustomEvents(eventsStr string) ([]Event, error) {
 	var events []Event
+	tzOption := lunar.WithTimezone(g.timezone)
 
 	parts := strings.Split(eventsStr, ",")
 	for _, part := range parts {
@@ -164,7 +173,7 @@ func (g *Generator) parseCustomEvents(eventsStr string) ([]Event, error) {
 			}
 
 			for year := g.startYear; year < g.startYear+g.yearsAhead; year++ {
-				date := lunar.FindLunarDate(year, lunar.Date{Month: month, Day: day})
+				date := lunar.FindLunarDate(year, lunar.Date{Month: month, Day: day}, tzOption)
 				if !date.IsZero() {
 					events = append(events, Event{
 						Title:       title,
@@ -184,7 +193,7 @@ func (g *Generator) parseCustomEvents(eventsStr string) ([]Event, error) {
 				return nil, errors.New("invalid date: " + datePart + ", day and month must be greater than 0")
 			}
 
-			date := lunar.FindLunarDate(year, lunar.Date{Month: month, Day: day})
+			date := lunar.FindLunarDate(year, lunar.Date{Month: month, Day: day}, tzOption)
 			if !date.IsZero() {
 				events = append(events, Event{
 					Title:       title,

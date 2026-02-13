@@ -21,12 +21,19 @@ type Range struct {
 type FindOption func(*findConfig)
 
 type findConfig struct {
-	range_ Range
+	findRange Range
+	timezone  string
 }
 
 func WithRange(r Range) FindOption {
 	return func(c *findConfig) {
-		c.range_ = r
+		c.findRange = r
+	}
+}
+
+func WithTimezone(tz string) FindOption {
+	return func(c *findConfig) {
+		c.timezone = tz
 	}
 }
 
@@ -41,7 +48,7 @@ var (
 )
 
 func FindLunarDate(year int, ld Date, opts ...FindOption) time.Time {
-	cfg := &findConfig{}
+	cfg := &findConfig{timezone: "Asia/Hanoi"}
 	for _, opt := range opts {
 		opt(cfg)
 	}
@@ -49,13 +56,13 @@ func FindLunarDate(year int, ld Date, opts ...FindOption) time.Time {
 	startMonth, endMonth := 1, 12
 	startDay, endDay := 1, 31
 
-	if cfg.range_.StartMonth > 0 {
-		startMonth = cfg.range_.StartMonth
-		startDay = cfg.range_.StartDay
+	if cfg.findRange.StartMonth > 0 {
+		startMonth = cfg.findRange.StartMonth
+		startDay = cfg.findRange.StartDay
 	}
-	if cfg.range_.EndMonth > 0 {
-		endMonth = cfg.range_.EndMonth
-		endDay = cfg.range_.EndDay
+	if cfg.findRange.EndMonth > 0 {
+		endMonth = cfg.findRange.EndMonth
+		endDay = cfg.findRange.EndDay
 	}
 
 	for month := startMonth; month <= endMonth; month++ {
@@ -70,7 +77,7 @@ func FindLunarDate(year int, ld Date, opts ...FindOption) time.Time {
 
 		for day := dayStart; day <= dayEnd; day++ {
 			loc := time.UTC
-			if l, err := time.LoadLocation("Asia/Hanoi"); err == nil {
+			if l, err := time.LoadLocation(cfg.timezone); err == nil {
 				loc = l
 			}
 			t := time.Date(year, time.Month(month), day, 0, 0, 0, 0, loc)

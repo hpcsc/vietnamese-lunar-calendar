@@ -15,6 +15,7 @@ var (
 	yearsAhead   = flag.Int("years", 10, "Number of years ahead to generate")
 	outputFile   = flag.String("output", "vietnamese-lunar-calendar.ics", "Output ICS file path")
 	customEvents = flag.String("events", "", "Custom lunar events in format 'day/month:title' (recurring) or 'day/month/year:title' (single year), can be repeated")
+	timezone     = flag.String("timezone", "Asia/Hanoi", "Timezone for lunar date calculation")
 )
 
 func main() {
@@ -22,7 +23,7 @@ func main() {
 
 	startYear := time.Now().Year()
 
-	gen := calendar.NewGenerator(startYear, *yearsAhead)
+	gen := calendar.NewGenerator(startYear, *yearsAhead, *timezone)
 	events, err := gen.Generate(*customEvents)
 	if err != nil {
 		log.Fatalf("Failed to generate events: %v", err)
