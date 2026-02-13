@@ -10,6 +10,11 @@ on:
         required: false
         default: '10'
         type: string
+      events:
+        description: 'Custom lunar events (day/month:title = recurring, day/month/year:title = single year, comma separated)'
+        required: false
+        default: ''
+        type: string
   push:
     branches:
       - main
@@ -34,7 +39,12 @@ jobs:
       - name: Generate ICS file
         run: |
           YEARS=${{ github.event.inputs.years_ahead || '10' }}
-          go run main.go -years $YEARS
+          EVENTS=${{ github.event.inputs.events || '' }}
+          if [ -n "$EVENTS" ]; then
+            go run main.go -years $YEARS -events "$EVENTS"
+          else
+            go run main.go -years $YEARS
+          fi
 
       - name: Upload ICS artifact
         uses: actions/upload-artifact@v4

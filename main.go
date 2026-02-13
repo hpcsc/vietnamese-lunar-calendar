@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	yearsAhead = flag.Int("years", 10, "Number of years ahead to generate")
-	outputFile = flag.String("output", "vietnamese-lunar-calendar.ics", "Output ICS file path")
+	yearsAhead   = flag.Int("years", 10, "Number of years ahead to generate")
+	outputFile   = flag.String("output", "vietnamese-lunar-calendar.ics", "Output ICS file path")
+	customEvents = flag.String("events", "", "Custom lunar events in format 'day/month:title' (recurring) or 'day/month/year:title' (single year), can be repeated")
 )
 
 func main() {
@@ -21,7 +22,13 @@ func main() {
 
 	startYear := time.Now().Year()
 
-	events := generateLunarEvents(startYear, *yearsAhead)
+	var events []LunarEvent
+	if *customEvents != "" {
+		events = parseCustomEvents(*customEvents, startYear, *yearsAhead)
+	} else {
+		events = generateLunarEvents(startYear, *yearsAhead)
+	}
+
 	icsContent := generateICS(events)
 
 	err := os.WriteFile(*outputFile, []byte(icsContent), 0644)
@@ -228,6 +235,67 @@ func findLunarDate(year, lunarMonth, lunarDay int) time.Time {
 		}
 	}
 	return time.Time{}
+}
+
+func parseCustomEvents(eventsStr string, startYear, yearsAhead int) []LunarEvent {
+	var events []LunarEvent
+
+	parts := strings.Split(eventsStr, ",")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+
+		kv := strings.Split(part, ":")
+		if len(kv) != 2 {
+			log.Printf("Invalid format: %s, expected day/month:title or day/month/year:title", part)
+			continue
+		}
+
+		datePart := strings.TrimSpace(kv[0])
+		title := strings.TrimSpace(kv[1])
+
+		dateParts := strings.Split(datePart, "/")
+		if len(dateParts) == 2 {
+			// recurring event: day/month:title
+			var day, month int
+			fmt.Sscanf(dateParts[0], "%d", &day)
+			fmt.Sscanf(dateParts[1], "%d", &month)
+
+			for year := startYear; year < startYear+yearsAhead; year++ {
+				date := findLunarDate(year, month, day)
+				if !date.IsZero() {
+					events = append(events, LunarEvent{
+						Title:       title,
+						Date:        date,
+						LunarDate:   LunarDate{Day: day, Month: month, Show: true},
+						Description: fmt.Sprintf("%s - Ngày %d tháng %d âm lịch", title, day, month),
+					})
+				}
+			}
+		} else if len(dateParts) == 3 {
+			// single event: day/month/year:title
+			var day, month, year int
+			fmt.Sscanf(dateParts[0], "%d", &day)
+			fmt.Sscanf(dateParts[1], "%d", &month)
+			fmt.Sscanf(dateParts[2], "%d", &year)
+
+			date := findLunarDate(year, month, day)
+			if !date.IsZero() {
+				events = append(events, LunarEvent{
+					Title:       title,
+					Date:        date,
+					LunarDate:   LunarDate{Day: day, Month: month, Show: true},
+					Description: fmt.Sprintf("%s - Ngày %d tháng %d năm %d âm lịch", title, day, month, year),
+				})
+			}
+		} else {
+			log.Printf("Invalid date format: %s, expected day/month:title or day/month/year:title", datePart)
+		}
+	}
+
+	return events
 }
 
 func generateICS(events []LunarEvent) string {
