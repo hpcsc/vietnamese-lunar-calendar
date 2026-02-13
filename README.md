@@ -18,13 +18,13 @@ Generates an ICS (iCalendar) file with Vietnamese lunar calendar events.
 ### Generate with Default Events
 
 ```bash
-go run main.go
+go run cmd/main.go
 ```
 
 ### Generate with Custom Events
 
 ```bash
-go run main.go -events "4/5:XXX,15/8/2026:My Birthday"
+go run cmd/main.go -events "4/5:XXX,15/8/2026:My Birthday"
 ```
 
 Format: `day/month:title` (recurring yearly) or `day/month/year:title` (single year)

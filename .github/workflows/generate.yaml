@@ -39,11 +39,11 @@ jobs:
       - name: Generate ICS file
         run: |
           YEARS=${{ github.event.inputs.years_ahead || '10' }}
-          EVENTS=${{ github.event.inputs.events || '' }}
+          EVENTS="${{ github.event.inputs.events || '' }}"
           if [ -n "$EVENTS" ]; then
-            go run main.go -years $YEARS -events "$EVENTS"
+            go run cmd/main.go -years $YEARS -events "$EVENTS"
           else
-            go run main.go -years $YEARS
+            go run cmd/main.go -years $YEARS
           fi
 
       - name: Upload ICS artifact
